@@ -25,6 +25,7 @@ func main() {
 	})
 
 	log.Printf("Bot %v is connected!\n", bot.Me.Username)
+	bot.Start()
 }
 
 func connectBot() *telegram.Bot {
