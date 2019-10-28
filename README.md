@@ -25,7 +25,7 @@ will (regretably) remove them from the group.
 BigBoofer uses go modules, so it requires Go >= 1.11.0.
 
 Contact `@BotFather` on Telegram for an API key. Then, set your API key 
-in `API_KEY.config` and run:
+in `config.go` and run:
 
 ```
 go build

@@ -4,15 +4,11 @@ import (
 	"bigboofer/database"
 	"bigboofer/handlers"
 
-	"io/ioutil"
 	"log"
 	"time"
 
 	telegram "gopkg.in/tucnak/telebot.v2"
 )
-
-// ConfigFile is the location where the API key is loaded from.
-const ConfigFile = "API_KEY.config"
 
 func main() {
 	log.Println("Connecting to Telegram...")
@@ -34,30 +30,16 @@ func main() {
 
 func connectBot() *telegram.Bot {
 	bot, err := telegram.NewBot(telegram.Settings{
-		Token:  loadAPIKey(),
+		Token:  APIKey,
 		Poller: &telegram.LongPoller{Timeout: 10 * time.Second},
 	})
 
 	if err != nil {
 		log.Printf("Could not connect to Telegram. Make sure you are ")
 		log.Printf("connected to the internet and have set the API key ")
-		log.Println("in API_KEY.config. Error details follow:")
+		log.Println("in config.go. Error details follow:")
 		log.Panicln(err)
 	}
 
 	return bot
-}
-
-// loadAPIKey returns the API key set in API_KEY.config
-func loadAPIKey() string {
-	apiKey, err := ioutil.ReadFile(ConfigFile)
-
-	if err != nil {
-		log.Printf("Error reading config file. Does API_KEY.config exist ")
-		log.Printf("in the project root, with the contents set to an ")
-		log.Println("API key from @BotFather? Error details follow:")
-		log.Panic(err)
-	}
-
-	return string(apiKey)
 }
