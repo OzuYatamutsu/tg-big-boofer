@@ -13,4 +13,11 @@ CREATE TABLE IF NOT EXISTS whitelist (
     user_id INTEGER,
     added_on DATETIME
 );
+
+CREATE TABLE IF NOT EXISTS channels (
+    id INTEGER PRIMARY KEY,
+    group_id INTEGER,
+    channel_id INTEGER,
+    passphrase STRING
+)
 `
