@@ -14,3 +14,4 @@
 # Project-specific ignored files
 bigboofer_data.sqlite3
 BigBoofer
+.DS_Store
