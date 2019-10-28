@@ -1,7 +1,7 @@
 # tg-big-boofer [![Build Status](https://travis-ci.org/OzuYatamutsu/tg-big-boofer.svg?branch=master)](https://travis-ci.org/OzuYatamutsu/tg-big-boofer)
 A Telegram bot to guard against low-effort spambots in large groups.
 <div align="center">
-    <img src="https://raw.githubusercontent.com/OzuYatamutsu/tg-big-boofer/master/bigboofer.png" /><br />
+    <img src="https://raw.githubusercontent.com/OzuYatamutsu/tg-big-boofer/master/bigboofer.png" width="300" height="300" /><br />
 </div>
 
 ## To run
