@@ -9,6 +9,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// DBFile points to the location of the database file to write to
+// (it will be created if it doesn't exist)
 const DBFile = "bigboofer_data.sqlite3"
 
 // OnboardDB creates the sqlite3 database file if
