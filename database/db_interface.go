@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"io/ioutil"
 	"log"
 	"strings"
 
@@ -10,8 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// DBFile is the location to create the sqlite db file
-const DBFile string = "bigboofer_data.sqlite3"
+const DBFile = "bigboofer_data.sqlite3"
 
 // OnboardDB creates the sqlite3 database file if
 // if doesn't already exist.
@@ -48,13 +46,5 @@ func GetDB() *sql.DB {
 
 // readDDL returns DDL in schema.sql as a list of DDL strings
 func readDDL() []string {
-	ddl, err := ioutil.ReadFile(DBFile)
-
-	if err != nil {
-		log.Printf("Error reading schema file. Does database/schema.sql exist? ")
-		log.Printf("Error details follow:")
-		log.Panicln(err)
-	}
-
-	return strings.Split(string(ddl), ";")
+	return strings.Split(Schema, ";")
 }

@@ -1,12 +1,12 @@
 package main
 
 import (
+	"bigboofer/database"
+	"bigboofer/handlers"
+
 	"io/ioutil"
 	"log"
 	"time"
-
-	"bigboofer/database"
-	"bigboofer/handlers"
 
 	telegram "gopkg.in/tucnak/telebot.v2"
 )
