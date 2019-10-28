@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"bigboofer/database"
 	"bigboofer/handlers"
 
 	telegram "gopkg.in/tucnak/telebot.v2"
@@ -18,6 +19,9 @@ func main() {
 
 	// Connect bot to Telegram
 	bot := connectBot()
+
+	// Set up database
+	database.OnboardDB()
 
 	// Register event handlers
 	bot.Handle(telegram.OnAddedToGroup, func(message *telegram.Message) {
@@ -37,7 +41,7 @@ func connectBot() *telegram.Bot {
 	if err != nil {
 		log.Printf("Could not connect to Telegram. Make sure you are ")
 		log.Printf("connected to the internet and have set the API key ")
-		log.Printf("in API_KEY.config. Error details follow:")
+		log.Println("in API_KEY.config. Error details follow:")
 		log.Panicln(err)
 	}
 
