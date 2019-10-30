@@ -21,7 +21,10 @@ func main() {
 
 	// Register event handlers
 	bot.Handle(telegram.OnAddedToGroup, func(message *telegram.Message) {
-		handlers.OnAddedToGroupHandler(bot, message)
+		handlers.OnAddedToGroup(bot, message)
+	})
+	bot.Handle(telegram.OnUserJoined, func(message *telegram.Message) {
+		handlers.OnUserJoined(bot, message)
 	})
 
 	log.Printf("Bot %v is connected!\n", bot.Me.Username)

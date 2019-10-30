@@ -5,6 +5,8 @@ import (
 	"log"
 	"strings"
 
+	telegram "gopkg.in/tucnak/telebot.v2"
+
 	// Importing solely for database/sql driver use
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -12,6 +14,20 @@ import (
 // DBFile points to the location of the database file to write to
 // (it will be created if it doesn't exist)
 const DBFile = "bigboofer_data.sqlite3"
+
+// AddUser adds a new user and their group to the challenged users list.
+func AddUser(user *telegram.User, group *telegram.Chat) {
+	db := GetDB()
+	transaction, _ := db.Begin()
+
+	db.Exec(
+		"INSERT INTO challenge(group_id, user_id, issued_on) "+
+			"VALUES (?, ?, CURRENT_TIMESTAMP)",
+		user.ID, group.ID,
+	)
+
+	transaction.Commit()
+}
 
 // OnboardDB creates the sqlite3 database file if
 // if doesn't already exist.
