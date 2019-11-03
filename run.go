@@ -26,6 +26,39 @@ func main() {
 	bot.Handle(telegram.OnUserJoined, func(message *telegram.Message) {
 		handlers.OnUserJoined(bot, message)
 	})
+	bot.Handle(telegram.OnText, func(message *telegram.Message) {
+		handlers.OnMessage(bot, message)
+	})
+	bot.Handle(telegram.OnPhoto, func(message *telegram.Message) {
+		handlers.OnMessage(bot, message)
+	})
+	bot.Handle(telegram.OnAudio, func(message *telegram.Message) {
+		handlers.OnMessage(bot, message)
+	})
+	bot.Handle(telegram.OnDocument, func(message *telegram.Message) {
+		handlers.OnMessage(bot, message)
+	})
+	bot.Handle(telegram.OnSticker, func(message *telegram.Message) {
+		handlers.OnMessage(bot, message)
+	})
+	bot.Handle(telegram.OnVideo, func(message *telegram.Message) {
+		handlers.OnMessage(bot, message)
+	})
+	bot.Handle(telegram.OnVoice, func(message *telegram.Message) {
+		handlers.OnMessage(bot, message)
+	})
+	bot.Handle(telegram.OnVideoNote, func(message *telegram.Message) {
+		handlers.OnMessage(bot, message)
+	})
+	bot.Handle(telegram.OnContact, func(message *telegram.Message) {
+		handlers.OnMessage(bot, message)
+	})
+	bot.Handle(telegram.OnLocation, func(message *telegram.Message) {
+		handlers.OnMessage(bot, message)
+	})
+	bot.Handle(telegram.OnVenue, func(message *telegram.Message) {
+		handlers.OnMessage(bot, message)
+	})
 
 	log.Printf("Bot %v is connected!\n", bot.Me.Username)
 	bot.Start()

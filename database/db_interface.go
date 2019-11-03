@@ -63,6 +63,7 @@ func UserWasVetted(user *telegram.User, group *telegram.Chat) bool {
 		return false
 	}
 
+	queryResult.Next()
 	queryResult.Scan(&countResult)
 	return countResult == 0
 }

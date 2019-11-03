@@ -16,3 +16,4 @@ config.go
 bigboofer_data.sqlite3
 BigBoofer
 .DS_Store
+debug

@@ -72,8 +72,9 @@ func OnMessage(bot *telegram.Bot, message *telegram.Message) {
 func constructVetMessage(username string, rulesURL string) string {
 	return fmt.Sprintf(
 		"Hello, @%v! Welcome to the group. Please read %v "+
-			"and reply here with the passphrase in the channel. To prevent spam, "+
-			"you will be prevented from sending messages until you do so.",
+			"and reply with the passphrase written in the channel. "+
+			"To prevent spam, you will be prevented from sending "+
+			"messages until you do so.",
 		username,
 		rulesURL,
 	)
