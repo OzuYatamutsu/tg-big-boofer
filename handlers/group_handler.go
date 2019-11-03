@@ -54,7 +54,7 @@ func OnMessage(bot *telegram.Bot, message *telegram.Message) {
 			message.Sender.Username, message.Sender.ID,
 		)
 		log.Printf(
-			"in chat %v (%v). Do we have admin permission there?",
+			"in chat %v (%v). Do we have admin permission there?\n",
 			message.Chat.Username, message.Chat.ID,
 		)
 	}
