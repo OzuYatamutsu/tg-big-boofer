@@ -12,6 +12,7 @@
 *.out
 
 # Project-specific ignored files
+config.go
 bigboofer_data.sqlite3
 BigBoofer
 .DS_Store

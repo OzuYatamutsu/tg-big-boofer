@@ -23,10 +23,48 @@ func AddUser(user *telegram.User, group *telegram.Chat) {
 	db.Exec(
 		"INSERT INTO challenge(group_id, user_id, issued_on) "+
 			"VALUES (?, ?, CURRENT_TIMESTAMP)",
-		user.ID, group.ID,
+		group.ID, user.ID,
 	)
 
 	transaction.Commit()
+}
+
+// VetUser removes a new user and their group from the challenged users list.
+// (i.e., they passed a challenge or it timed out.)
+func VetUser(user *telegram.User, group *telegram.Chat) {
+	db := GetDB()
+	transaction, _ := db.Begin()
+
+	db.Exec(
+		"DELETE FROM challenge(group_id, user_id) "+
+			"VALUES (?, ?)",
+		group.ID, user.ID,
+	)
+
+	transaction.Commit()
+}
+
+// UserWasVetted returns true if the bot is not currently
+// waiting for a challenge response from the user in the
+// given group.
+func UserWasVetted(user *telegram.User, group *telegram.Chat) bool {
+	db := GetDB()
+
+	// If user is currently being vetted, COUNT(*) should return 1. (Else 0.)
+	// So, if the user was already vetted here, we should expect a 0.
+	var countResult int
+	queryResult, err := db.Query(
+		"SELECT COUNT(*) FROM challenge WHERE group_id=? AND user_id=?",
+		group.ID, user.ID,
+	)
+
+	if err != nil {
+		log.Printf("Error in UserWasVetted query!! Returning false. %v\n", err)
+		return false
+	}
+
+	queryResult.Scan(&countResult)
+	return countResult == 0
 }
 
 // OnboardDB creates the sqlite3 database file if
