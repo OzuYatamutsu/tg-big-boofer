@@ -27,7 +27,7 @@ func OnUserJoined(bot *telegram.Bot, message *telegram.Message) {
 	database.AddUser(message.UserJoined, message.Chat)
 	bot.Send(message.Chat, constructVetMessage(
 		message.UserJoined.Username,
-		"#RULES_CHANNEL_URL",
+		database.GetAuthChannel(message.Chat),
 	))
 }
 
@@ -62,7 +62,8 @@ func OnMessage(bot *telegram.Bot, message *telegram.Message) {
 	// ...and PM the user.
 	bot.Send(
 		message.Sender, constructVetMessage(
-			message.Sender.Username, "#RULES_CHANNEL_URL",
+			message.Sender.Username,
+			database.GetAuthChannel(message.Chat),
 		),
 	)
 }

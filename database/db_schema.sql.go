@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS challenge (
 CREATE TABLE IF NOT EXISTS channels (
     id INTEGER PRIMARY KEY,
     group_id INTEGER,
-    channel_id INTEGER,
+    channel_url STRING,
     passphrase STRING
 )
 `

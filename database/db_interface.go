@@ -68,6 +68,55 @@ func UserWasVetted(user *telegram.User, group *telegram.Chat) bool {
 	return countResult == 0
 }
 
+// GetAuthChannel returns the channel username of the channel
+// containing the passphrase for a given chat.
+func GetAuthChannel(group *telegram.Chat) string {
+	db := GetDB()
+
+	var channelUsername string
+	queryResult, err := db.Query(
+		"SELECT channel_username FROM channels WHERE group_id=?",
+		group.ID,
+	)
+
+	if err != nil {
+		log.Printf("Error in GetAuthChannel query!! Returning empty string. %v\n", err)
+		return ""
+	}
+
+	queryResult.Next()
+	queryResult.Scan(&channelUsername)
+
+	// Prepend the @ prefix to the username if necessary so the channel
+	// username is clickable in message
+	if channelUsername != "" && !strings.HasPrefix(channelUsername, "@") {
+		channelUsername = "@" + channelUsername
+	}
+	return channelUsername
+}
+
+// CheckPassphrase returns true if the passphrase given is valid
+// for the given chat.
+func CheckPassphrase(group *telegram.Chat, passphrase string) bool {
+	db := GetDB()
+
+	// If the passphrase matches, COUNT(*) should return 1. (Else 0.)
+	var countResult int
+	queryResult, err := db.Query(
+		"SELECT COUNT(*) FROM channels WHERE group_id=? AND passphrase=?",
+		group.ID, passphrase,
+	)
+
+	if err != nil {
+		log.Printf("Error in CheckPassphrase query!! Returning false. %v\n", err)
+		return false
+	}
+
+	queryResult.Next()
+	queryResult.Scan(&countResult)
+	return countResult == 1
+}
+
 // OnboardDB creates the sqlite3 database file if
 // if doesn't already exist.
 func OnboardDB() {
