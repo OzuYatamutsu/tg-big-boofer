@@ -10,6 +10,12 @@ import (
 	telegram "gopkg.in/tucnak/telebot.v2"
 )
 
+// OnApproveCommand manually approves the provided user (bypassing the passphrase check).
+// Checks that the user who sent the command is an admin of the group they sent it in.
+func OnApproveCommand(bot *telegram.Bot, message *telegram.Message) {
+	return // TODO
+}
+
 // OnSetChannelCommand sets the channel containing the passphrase (and possibly rules)
 // in the current group. Checks that the user who sent the command is an admin
 // of the group they sent it in.

@@ -29,6 +29,9 @@ func main() {
 	bot.Handle("/setchannel", func(message *telegram.Message) {
 		handlers.OnSetChannelCommand(bot, message)
 	})
+	bot.Handle("/approve", func(message *telegram.Message) {
+		handlers.OnApproveCommand(bot, message)
+	})
 	bot.Handle(telegram.OnText, func(message *telegram.Message) {
 		handlers.OnMessage(bot, message)
 	})
