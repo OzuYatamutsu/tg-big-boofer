@@ -13,11 +13,31 @@ import (
 // newly added to a group.
 func OnAddedToGroup(bot *telegram.Bot, message *telegram.Message) {
 	bot.Send(message.Chat, "Woof! Woof! ▽・ω・▽")
+	bot.Send(
+		message.Chat,
+		"Admins, please promote me to admin and configure me "+
+			"by running /setchannel <channel_url> <passphrase>!",
+	)
 }
 
 // OnUserJoined handles what should happen when
 // the bot sees a new user join a group it is a part of.
 func OnUserJoined(bot *telegram.Bot, message *telegram.Message) {
+	if database.GetAuthChannel(message.Chat) == "" {
+		log.Printf(
+			"New user %v (%v) in %v (%v), but auth channel was not set here.\n",
+			message.UserJoined.Username, message.UserJoined.ID,
+			message.Chat.Username, message.Chat.ID,
+		)
+
+		bot.Send(
+			message.Chat,
+			"Admins, please promote me to admin and configure me "+
+				"by running /setchannel <channel_url> <passphrase>!",
+		)
+		return
+	}
+
 	log.Printf(
 		"New user %v (%v) in %v (%v), issuing challenge.\n",
 		message.UserJoined.Username, message.UserJoined.ID,

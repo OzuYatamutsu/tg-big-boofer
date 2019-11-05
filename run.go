@@ -26,6 +26,9 @@ func main() {
 	bot.Handle(telegram.OnUserJoined, func(message *telegram.Message) {
 		handlers.OnUserJoined(bot, message)
 	})
+	bot.Handle("/setchannel", func(message *telegram.Message) {
+		handlers.OnSetChannelCommand(bot, message)
+	})
 	bot.Handle(telegram.OnText, func(message *telegram.Message) {
 		handlers.OnMessage(bot, message)
 	})

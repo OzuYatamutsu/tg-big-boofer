@@ -68,14 +68,33 @@ func UserWasVetted(user *telegram.User, group *telegram.Chat) bool {
 	return countResult == 0
 }
 
+// SetAuthChannel sets the passphrase and channel username of the channel
+// containing the passphrase for a given chat.
+func SetAuthChannel(group *telegram.Chat, channelURL string, passphrase string) {
+	db := GetDB()
+	transaction, _ := db.Begin()
+
+	_, err := db.Exec(
+		"INSERT OR REPLACE INTO channels (group_id, channel_url, passphrase) VALUES (?, ?, ?)",
+		group.ID, channelURL, passphrase,
+	)
+
+	if err != nil {
+		log.Printf("Error in SetAuthChannel query!! %v\n", err)
+		return
+	}
+
+	transaction.Commit()
+}
+
 // GetAuthChannel returns the channel username of the channel
 // containing the passphrase for a given chat.
 func GetAuthChannel(group *telegram.Chat) string {
 	db := GetDB()
 
-	var channelUsername string
+	var channelURL string
 	queryResult, err := db.Query(
-		"SELECT channel_username FROM channels WHERE group_id=?",
+		"SELECT channel_url FROM channels WHERE group_id=?",
 		group.ID,
 	)
 
@@ -85,14 +104,18 @@ func GetAuthChannel(group *telegram.Chat) string {
 	}
 
 	queryResult.Next()
-	queryResult.Scan(&channelUsername)
+	queryResult.Scan(&channelURL)
 
-	// Prepend the @ prefix to the username if necessary so the channel
+	// Prepend the t.me prefix to the username if necessary so the channel
 	// username is clickable in message
-	if channelUsername != "" && !strings.HasPrefix(channelUsername, "@") {
-		channelUsername = "@" + channelUsername
+	if channelURL != "" && !strings.HasPrefix(channelURL, "https://") {
+		if !strings.HasPrefix(channelURL, "t.me/") {
+			channelURL = "https://t.me/" + channelURL
+		} else {
+			channelURL = "https://" + channelURL
+		}
 	}
-	return channelUsername
+	return channelURL
 }
 
 // CheckPassphrase returns true if the passphrase given is valid
