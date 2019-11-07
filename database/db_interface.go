@@ -267,10 +267,19 @@ func PurgeOldChallengesForChat(bot *telegram.Bot, group *telegram.Chat) {
 			userChat.Username, userTarget.User.ID, group.Username, group.ID,
 		)
 
-		bot.Send(
-			group,
-			fmt.Sprintf("@%v didn't respond to challenge in time, removing!", userChat.Username),
-		)
+		// Check to see if we need to kick this person, or just clean up metadata
+		member, err := bot.ChatMemberOf(group, userTarget.User)
+		if err != nil || member.Role != telegram.Member {
+			log.Printf(
+				"%v (%v) was already removed from %v (%v), cleaning up metadata.\n",
+				userChat.Username, userTarget.User.ID, group.Username, group.ID,
+			)
+		} else {
+			bot.Send(
+				group,
+				fmt.Sprintf("@%v didn't respond to challenge in time, removing!", userChat.Username),
+			)
+		}
 
 		// Expiring is the same as removing and vetting
 		bot.Ban(group, &userTarget)
