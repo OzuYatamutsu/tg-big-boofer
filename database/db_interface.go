@@ -1,9 +1,10 @@
 package database
 
 import (
-	"database/sql"
 	"log"
 	"strings"
+
+	"database/sql"
 
 	telegram "gopkg.in/tucnak/telebot.v2"
 
@@ -14,6 +15,11 @@ import (
 // DBFile points to the location of the database file to write to
 // (it will be created if it doesn't exist)
 const DBFile = "bigboofer_data.sqlite3"
+
+// MaxChallengeTime describes the maximum time to wait
+// for a user to complete a challenge before removing them
+// (in SQLite duration format, see documentation for datetime()).
+const MaxChallengeTime = "+5 minutes"
 
 // AddUser adds a new user and their group to the challenged users list.
 func AddUser(user *telegram.User, group *telegram.Chat) {
@@ -138,6 +144,67 @@ func CheckPassphrase(group *telegram.Chat, passphrase string) bool {
 	queryResult.Next()
 	queryResult.Scan(&countResult)
 	return countResult == 1
+}
+
+// PurgeOldChallengesForAllChats runs PurgeOldChallengesForChat for all chats
+// we know of in the database.
+func PurgeOldChallengesForAllChats(bot *telegram.Bot) {
+	db := GetDB()
+
+	var groupID int64
+	queryResult, err := db.Query(
+		"SELECT group_id FROM challenge",
+	)
+
+	if err != nil {
+		log.Printf("Error in PurgeOldChallengesForAllChats query!! %v\n", err)
+		return
+	}
+
+	for queryResult.Next() {
+		queryResult.Scan(&groupID)
+		PurgeOldChallengesForChat(bot, &telegram.Chat{
+			ID: groupID,
+		})
+	}
+}
+
+// PurgeOldChallengesForChat expires any challenge greater than the threshold
+// (set in db_interface.go) for the given chat, and removes the users
+// in the chat if they are still there. (Presumably, they haven't completed
+// the challenge in time.)
+func PurgeOldChallengesForChat(bot *telegram.Bot, group *telegram.Chat) {
+	db := GetDB()
+
+	var userID int
+	queryResult, err := db.Query(
+		"SELECT user_id FROM challenge WHERE group_id=? "+
+			"AND datetime(issued_on, ?, 'localtime') < datetime('now')",
+		group.ID, MaxChallengeTime,
+	)
+
+	if err != nil {
+		log.Printf("Error in PurgeOldChallengesForChat query!! %v\n", err)
+		return
+	}
+
+	for queryResult.Next() {
+		queryResult.Scan(&userID)
+		log.Printf(
+			"Removing user with ID %v from %v (%v), expired challenge.\n",
+			userID, group.Username, group.ID,
+		)
+
+		target := &telegram.ChatMember{
+			User: &telegram.User{
+				ID: userID,
+			},
+		}
+
+		// Expiring is the same as removing and vetting
+		bot.Ban(group, target)
+		VetUser(target.User, group)
+	}
 }
 
 // OnboardDB creates the sqlite3 database file if

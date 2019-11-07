@@ -66,6 +66,15 @@ func main() {
 		handlers.OnMessage(bot, message)
 	})
 
+	// Schedule recurring job to purge people who take too long to
+	// respond to the challenge
+	go func(bot *telegram.Bot) {
+		for true {
+			time.Sleep(30 * time.Second)
+			database.PurgeOldChallengesForAllChats(bot)
+		}
+	}(bot)
+
 	log.Printf("Bot %v is connected!\n", bot.Me.Username)
 	bot.Start()
 }
