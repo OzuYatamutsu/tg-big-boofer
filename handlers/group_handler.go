@@ -95,8 +95,10 @@ func constructVetMessage(username string, rulesURL string) string {
 		"Hello, @%v! Welcome to the group. Please read %v "+
 			"and reply with the passphrase written in the channel. "+
 			"To prevent spam, you will be prevented from sending "+
-			"messages until you do so.",
+			"messages until you do so. Admins, you can manually "+
+			"approve this user by typing /approve @%v.",
 		username,
 		rulesURL,
+		username,
 	)
 }
