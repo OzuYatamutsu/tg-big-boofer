@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
@@ -24,13 +25,20 @@ const MaxChallengeTime = "+5 minutes"
 // AddUser adds a new user and their group to the challenged users list.
 func AddUser(user *telegram.User, group *telegram.Chat) {
 	db := GetDB()
+	defer db.Close()
 	transaction, _ := db.Begin()
 
-	db.Exec(
-		"INSERT INTO challenge(group_id, user_id, issued_on) "+
+	_, err := db.Exec(
+		"INSERT OR REPLACE INTO challenge(group_id, user_id, issued_on) "+
 			"VALUES (?, ?, CURRENT_TIMESTAMP)",
 		group.ID, user.ID,
 	)
+
+	if err != nil {
+		log.Printf("Error in AddUser query!! %v\n", err)
+		transaction.Rollback()
+		return
+	}
 
 	transaction.Commit()
 }
@@ -39,13 +47,20 @@ func AddUser(user *telegram.User, group *telegram.Chat) {
 // (i.e., they passed a challenge or it timed out.)
 func VetUser(user *telegram.User, group *telegram.Chat) {
 	db := GetDB()
+	defer db.Close()
 	transaction, _ := db.Begin()
 
-	db.Exec(
+	_, err := db.Exec(
 		"DELETE FROM challenge(group_id, user_id) "+
 			"VALUES (?, ?)",
 		group.ID, user.ID,
 	)
+
+	if err != nil {
+		log.Printf("Error in VetUser query!! %v\n", err)
+		transaction.Rollback()
+		return
+	}
 
 	transaction.Commit()
 }
@@ -55,6 +70,7 @@ func VetUser(user *telegram.User, group *telegram.Chat) {
 // given group.
 func UserWasVetted(user *telegram.User, group *telegram.Chat) bool {
 	db := GetDB()
+	defer db.Close()
 
 	// If user is currently being vetted, COUNT(*) should return 1. (Else 0.)
 	// So, if the user was already vetted here, we should expect a 0.
@@ -71,6 +87,7 @@ func UserWasVetted(user *telegram.User, group *telegram.Chat) bool {
 
 	queryResult.Next()
 	queryResult.Scan(&countResult)
+	queryResult.Close()
 	return countResult == 0
 }
 
@@ -78,6 +95,7 @@ func UserWasVetted(user *telegram.User, group *telegram.Chat) bool {
 // containing the passphrase for a given chat.
 func SetAuthChannel(group *telegram.Chat, channelURL string, passphrase string) {
 	db := GetDB()
+	defer db.Close()
 	transaction, _ := db.Begin()
 
 	_, err := db.Exec(
@@ -87,6 +105,7 @@ func SetAuthChannel(group *telegram.Chat, channelURL string, passphrase string) 
 
 	if err != nil {
 		log.Printf("Error in SetAuthChannel query!! %v\n", err)
+		transaction.Rollback()
 		return
 	}
 
@@ -111,6 +130,8 @@ func GetAuthChannel(group *telegram.Chat) string {
 
 	queryResult.Next()
 	queryResult.Scan(&channelURL)
+	queryResult.Close()
+	db.Close()
 
 	// Prepend the t.me prefix to the username if necessary so the channel
 	// username is clickable in message
@@ -143,6 +164,9 @@ func CheckPassphrase(group *telegram.Chat, passphrase string) bool {
 
 	queryResult.Next()
 	queryResult.Scan(&countResult)
+	queryResult.Close()
+	db.Close()
+
 	return countResult == 1
 }
 
@@ -152,20 +176,30 @@ func PurgeOldChallengesForAllChats(bot *telegram.Bot) {
 	db := GetDB()
 
 	var groupID int64
+	var chatTargets []telegram.Chat
+
 	queryResult, err := db.Query(
 		"SELECT group_id FROM challenge",
 	)
 
 	if err != nil {
 		log.Printf("Error in PurgeOldChallengesForAllChats query!! %v\n", err)
+		db.Close()
 		return
 	}
 
 	for queryResult.Next() {
 		queryResult.Scan(&groupID)
-		PurgeOldChallengesForChat(bot, &telegram.Chat{
+		chatTargets = append(chatTargets, telegram.Chat{
 			ID: groupID,
 		})
+	}
+
+	queryResult.Close()
+	db.Close()
+
+	for _, chatTarget := range chatTargets {
+		PurgeOldChallengesForChat(bot, &chatTarget)
 	}
 }
 
@@ -177,6 +211,8 @@ func PurgeOldChallengesForChat(bot *telegram.Bot, group *telegram.Chat) {
 	db := GetDB()
 
 	var userID int
+	var userTargets []telegram.ChatMember
+
 	queryResult, err := db.Query(
 		"SELECT user_id FROM challenge WHERE group_id=? "+
 			"AND datetime(issued_on, ?, 'localtime') < datetime('now')",
@@ -185,25 +221,38 @@ func PurgeOldChallengesForChat(bot *telegram.Bot, group *telegram.Chat) {
 
 	if err != nil {
 		log.Printf("Error in PurgeOldChallengesForChat query!! %v\n", err)
+		db.Close()
 		return
 	}
 
 	for queryResult.Next() {
 		queryResult.Scan(&userID)
-		log.Printf(
-			"Removing user with ID %v from %v (%v), expired challenge.\n",
-			userID, group.Username, group.ID,
-		)
-
-		target := &telegram.ChatMember{
+		userTargets = append(userTargets, telegram.ChatMember{
 			User: &telegram.User{
 				ID: userID,
 			},
-		}
+		})
+	}
+
+	queryResult.Close()
+	db.Close()
+
+	for _, userTarget := range userTargets {
+		userChat, _ := bot.ChatByID(fmt.Sprintf("%v", userTarget.User.ID))
+
+		log.Printf(
+			"Removing %v (%v) from %v (%v), expired challenge.\n",
+			userChat.Username, userTarget.User.ID, group.Username, group.ID,
+		)
+
+		bot.Send(
+			group,
+			fmt.Sprintf("@%v didn't respond to challenge in time, removing!", userChat.Username),
+		)
 
 		// Expiring is the same as removing and vetting
-		bot.Ban(group, target)
-		VetUser(target.User, group)
+		bot.Ban(group, &userTarget)
+		VetUser(userTarget.User, group)
 	}
 }
 
@@ -221,15 +270,18 @@ func OnboardDB() {
 		}
 	}
 
+	db.Close()
 	log.Println("Database ready!")
 }
 
 // GetDB returns a new SQL connection object.
 // Since this is SQLite, we create a new connection for each
 // transaction. This functionality should be changed if another
-// database engine is used.
+// database engine is used. Make sure to close the DB when you
+// are done using it.
 func GetDB() *sql.DB {
 	DB, err := sql.Open("sqlite3", DBFile)
+
 	if err != nil {
 		log.Printf("Could not create a connection object. Do we have ")
 		log.Printf("permission to create or read a file in the DBFile directory? ")

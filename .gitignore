@@ -12,6 +12,7 @@
 *.out
 
 # Project-specific ignored files
+__debug_bin
 config.go
 bigboofer_data.sqlite3
 BigBoofer
