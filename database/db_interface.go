@@ -29,9 +29,9 @@ func AddUser(user *telegram.User, group *telegram.Chat) {
 	transaction, _ := db.Begin()
 
 	_, err := db.Exec(
-		"INSERT OR REPLACE INTO challenge(group_id, user_id, issued_on) "+
-			"VALUES (?, ?, CURRENT_TIMESTAMP)",
-		group.ID, user.ID,
+		"INSERT OR REPLACE INTO challenge(group_id, user_id, username, issued_on) "+
+			"VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
+		group.ID, user.ID, user.Username,
 	)
 
 	if err != nil {
@@ -51,8 +51,7 @@ func VetUser(user *telegram.User, group *telegram.Chat) {
 	transaction, _ := db.Begin()
 
 	_, err := db.Exec(
-		"DELETE FROM challenge(group_id, user_id) "+
-			"VALUES (?, ?)",
+		"DELETE FROM challenge WHERE group_id=? AND user_id=?",
 		group.ID, user.ID,
 	)
 
@@ -89,6 +88,29 @@ func UserWasVetted(user *telegram.User, group *telegram.Chat) bool {
 	queryResult.Scan(&countResult)
 	queryResult.Close()
 	return countResult == 0
+}
+
+// GetIDForChallengedUsername returns the ID of a username that is challenged
+// in the given group. Returns 0 if it was not found.
+func GetIDForChallengedUsername(group *telegram.Chat, username string) int {
+	db := GetDB()
+	defer db.Close()
+
+	var userID int
+	queryResult, err := db.Query(
+		"SELECT user_id FROM challenge WHERE username=?",
+		username,
+	)
+
+	if err != nil {
+		log.Printf("Error in GetIDForChallengedUsername query!! Returning 0. %v\n", err)
+		return 0
+	}
+
+	queryResult.Next()
+	queryResult.Scan(&userID)
+	queryResult.Close()
+	return userID
 }
 
 // SetAuthChannel sets the passphrase and channel username of the channel
@@ -215,7 +237,7 @@ func PurgeOldChallengesForChat(bot *telegram.Bot, group *telegram.Chat) {
 
 	queryResult, err := db.Query(
 		"SELECT user_id FROM challenge WHERE group_id=? "+
-			"AND datetime(issued_on, ?, 'localtime') < datetime('now')",
+			"AND datetime(issued_on, ?) < datetime('now')",
 		group.ID, MaxChallengeTime,
 	)
 

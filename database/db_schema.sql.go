@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS challenge (
     id INTEGER PRIMARY KEY,
     group_id INTEGER,
     user_id INTEGER,
+    username STRING,
     issued_on DATETIME
 );
 

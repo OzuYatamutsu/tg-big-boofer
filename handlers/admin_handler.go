@@ -182,6 +182,7 @@ func parseApproveArgs(message *telegram.Message) *telegram.User {
 	}
 
 	return &telegram.User{
+		ID:       database.GetIDForChallengedUsername(message.Chat, username),
 		Username: username,
 	}
 }
