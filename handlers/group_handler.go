@@ -46,6 +46,13 @@ func OnUserJoined(bot *telegram.Bot, message *telegram.Message) {
 	)
 
 	database.AddUser(message.UserJoined, message.Chat)
+	// Try restricting as many privileges as possible (except CanSendMessage)
+	userAsChatMember, err := bot.ChatMemberOf(message.Chat, message.UserJoined)
+	if err != nil {
+		userAsChatMember.Rights.CanSendMedia = false
+		userAsChatMember.Rights.CanSendOther = false
+		bot.Restrict(message.Chat, userAsChatMember)
+	}
 	bot.Send(message.Chat, constructVetMessage(
 		message.UserJoined.Username,
 		database.GetAuthChannel(message.Chat),
@@ -70,6 +77,15 @@ func OnMessage(bot *telegram.Bot, message *telegram.Message) {
 		database.CheckPassphrase(message.Chat, message.Text) {
 		// Passphrase matches! Vet this user.
 		database.VetUser(message.Sender, message.Chat)
+
+		// Unrestrict rights
+		userAsChatMember, err := bot.ChatMemberOf(message.Chat, message.UserJoined)
+		if err != nil {
+			userAsChatMember.Rights.CanSendMedia = true
+			userAsChatMember.Rights.CanSendOther = true
+			bot.Restrict(message.Chat, userAsChatMember)
+		}
+
 		log.Printf(
 			"User %v (%v) was vetted in %v (%v)",
 			message.Sender.Username, message.Sender.ID,
