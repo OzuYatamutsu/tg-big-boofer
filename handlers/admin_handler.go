@@ -90,11 +90,8 @@ func validateSetChannelCommand(bot *telegram.Bot, message *telegram.Message) boo
 	// Validate that the sender is an admin of this chat
 	admins, _ := bot.AdminsOf(message.Chat)
 	if !helpers.ChatMemberContains(&admins, message.Sender) {
-		bot.Reply(
-			message,
-			"It looks like you aren't an admin of this group, "+
-				"so you can't configure the channel for it ▽ - ω - ▽.",
-		)
+		// This person is not an admin.
+		bot.Delete(message)
 		return false
 	}
 	// Validate that channel was sent
@@ -132,11 +129,8 @@ func validateApproveCommand(bot *telegram.Bot, message *telegram.Message) bool {
 	// Validate that the sender is an admin of this chat
 	admins, _ := bot.AdminsOf(message.Chat)
 	if !helpers.ChatMemberContains(&admins, message.Sender) {
-		bot.Reply(
-			message,
-			"It looks like you aren't an admin of this group, "+
-				"so you can't configure the channel for it ▽ - ω - ▽.",
-		)
+		// This person is not an admin.
+		bot.Delete(message)
 		return false
 	}
 	// Validate that the message returned a username

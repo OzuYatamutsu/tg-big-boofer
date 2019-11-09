@@ -5,6 +5,7 @@ import (
 
 	"fmt"
 	"log"
+	"strings"
 
 	telegram "gopkg.in/tucnak/telebot.v2"
 )
@@ -64,6 +65,28 @@ func OnMessage(bot *telegram.Bot, message *telegram.Message) {
 	}
 
 	// Message was sent in group by non-vetted user!
+	// Check whether it matches the passphrase,
+	if !strings.HasPrefix(message.Text, "/") &&
+		database.CheckPassphrase(message.Chat, message.Text) {
+		// Passphrase matches! Vet this user.
+		database.VetUser(message.Sender, message.Chat)
+		log.Printf(
+			"User %v (%v) was vetted in %v (%v)",
+			message.Sender.Username, message.Sender.ID,
+			message.Chat.Username, message.Chat.ID,
+		)
+
+		bot.Send(
+			message.Chat,
+			"Woof!! Thanks, @%v! You are free to chat as you wish. ▽ - ω - ▽",
+			message.Sender.Username,
+		)
+
+		// Delete the message to clean up
+		bot.Delete(message)
+
+		return
+	}
 
 	// Delete the message,
 	err := bot.Delete(message)
